@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {dayKey,inputDate,toUTC,safeURL,esc,monthGrid,transitions} from '../domain.js';
+test('Istanbul dates round-trip independently of browser timezone',()=>{const d='2026-10-12T22:30:00Z';assert.equal(dayKey(d),'2026-10-13');assert.equal(inputDate(d),'2026-10-13T01:30');assert.equal(toUTC('2026-10-13T01:30'),d.replace('Z','.000Z'));});
+test('Calendar is Monday-first across month boundaries',()=>{const grid=monthGrid(2026,9);assert.equal(grid[0].key,'2026-09-28');assert.equal(grid.at(-1).key,'2026-11-01');assert.equal(grid.filter(d=>!d.outside).length,31);});
+test('Unsafe links and untrusted markup do not become executable content',()=>{assert.equal(safeURL('javascript:alert(1)'), '');assert.equal(safeURL('data:text/html,<script>'), '');assert.equal(esc('<img onerror="x">'),'&lt;img onerror=&quot;x&quot;&gt;');});
+test('Only approvers/admin can approve and only admin can mark published',()=>{assert.deepEqual(transitions('designer','pending'),[]);assert.deepEqual(transitions('approver','pending'),['approved','revision']);assert.deepEqual(transitions('approver','approved'),[]);assert.ok(transitions('admin','approved').includes('published'));});
