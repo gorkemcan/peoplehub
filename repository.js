@@ -20,7 +20,13 @@ async function allRows(query){
  for(;;){const rows=unwrap(await query.range(start,start+499));result.push(...rows);if(rows.length<500)return result;start+=500;}
 }
 export const live={
- async me(){return unwrap(await client.rpc('ph_me').maybeSingle());},
+ async me(){
+  const current=unwrap(await client.rpc('ph_me').maybeSingle());
+  if(current?.id)return current;
+  const joined=await client.rpc('ph_join').maybeSingle();
+  if(joined.error?.code==='PGRST202')return null;
+  return unwrap(joined);
+ },
  async list(){return allRows(client.from('ph_contents').select('*').order('scheduled_at').order('id'));},
  async members(){return allRows(client.from('ph_members').select('id,display_name,role,active').order('id'));},
  async comments(id){return allRows(client.from('ph_comments').select('*').eq('content_id',id).order('created_at').order('id'));},
